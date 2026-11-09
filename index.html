@@ -1362,16 +1362,18 @@
       clockBody.classList.add('ringing');
       celebrationModal.classList.add('show');
 
-      const padH = String(targetHour).padStart(2, '0');
+      const period = targetHour < 12 ? '上午' : '下午';
+      const targetHour12 = targetHour % 12 || 12;
+      const padH = String(targetHour12).padStart(2, '0');
       const padM = String(targetMinute).padStart(2, '0');
 
       if (reason === 'early') {
         celebrationIcon.textContent = '🏆';
         celebrationTitle.textContent = '哇！提早吃完早餐囉！';
-        celebrationDesc.innerHTML = `比 ${padH}:${padM} 還要快完成，你是超級早餐小達人！🍞🥛<br>送你滿滿的煙火與兒歌獎勵！`;
+        celebrationDesc.innerHTML = `比 ${period} ${padH}:${padM} 還要快完成，你是超級早餐小達人！🍞🥛<br>送你滿滿的煙火與兒歌獎勵！`;
       } else {
         celebrationIcon.textContent = '🎆';
-        celebrationTitle.textContent = `${padH}:${padM} 時間到囉！`;
+        celebrationTitle.textContent = `${period} ${padH}:${padM} 時間到囉！`;
         celebrationDesc.innerHTML = `準時用完活力早餐 🍞🥛<br>擦擦小嘴巴，準備背書包開心出門囉！`;
       }
 
@@ -1416,10 +1418,11 @@
 
     function updateTargetLabels() {
       const period = targetHour < 12 ? '上午' : '下午';
-      const padH = String(targetHour).padStart(2, '0');
+      const targetHour12 = targetHour % 12 || 12;
+      const padH = String(targetHour12).padStart(2, '0');
       const padM = String(targetMinute).padStart(2, '0');
       targetPillText.textContent = `${period} ${padH}:${padM}`;
-      targetMiniHint.textContent = `🔔 目標 ${padH}:${padM} 完食`;
+      targetMiniHint.textContent = `🔔 目標 ${period} ${padH}:${padM} 完食`;
     }
 
     /*************************************************************
@@ -1430,11 +1433,12 @@
     function tickClock() {
       const now = new Date();
       const hours = now.getHours();
+      const hours12 = hours % 12 || 12;
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
 
-      // 1. 更新上方可愛電子鐘
-      hourDigits.textContent = String(hours).padStart(2, '0');
+      // 1. 更新上方可愛電子鐘（12小時制搭配上午/下午）
+      hourDigits.textContent = String(hours12).padStart(2, '0');
       minDigits.textContent = String(minutes).padStart(2, '0');
       secDigits.textContent = String(seconds).padStart(2, '0');
       ampmDisplay.textContent = hours < 12 ? '上午 AM' : '下午 PM';
