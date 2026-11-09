@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🌞 活力早餐小鬧鐘｜7:20 準時完食挑戰</title>
+  <!-- 圓潤可愛字體 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-top: #FFF6D6;
+      --bg-bottom: #FFE3B3;
+      --clock-shell: #FFB72B;
+      --clock-shell-dark: #E89900;
+      --clock-face: #FFFDF7;
+      --clock-screen: #2C221E;
+      --digit-main: #FFE15D;
+      --digit-sec: #FF9F45;
+      --countdown-bg: #FFF9EC;
+      --countdown-border: #FFD372;
+      --accent-red: #FF5D5D;
+      --accent-green: #3EC70B;
+      --accent-blue: #4D96FF;
+      --accent-purple: #9C51E0;
+      --text-dark: #4A3525;
+      --text-muted: #8C6D53;
+      --shadow-soft: 0 12px 30px rgba(214, 135, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+      background: linear-gradient(160deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      color: var(--text-dark);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 背景漂浮早餐小圖示 */
+    .bg-decorations {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .floating-item {
+      position: absolute;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      opacity: 0.25;
+      animation: floatAround 8s ease-in-out infinite;
+    }
+    .floating-item:nth-child(1) { top: 6%; left: 6%; animation-delay: 0s; }
+    .floating-item:nth-child(2) { top: 10%; right: 8%; animation-delay: 1.5s; }
+    .floating-item:nth-child(3) { bottom: 8%; left: 8%; animation-delay: 3s; }
+    .floating-item:nth-child(4) { bottom: 12%; right: 6%; animation-delay: 4.5s; }
+    .floating-item:nth-child(5) { top: 48%; left: 3%; animation-delay: 2s; }
+    .floating-item:nth-child(6) { top: 45%; right: 3%; animation-delay: 5s; }
+
+    @keyframes floatAround {
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-14px) rotate(8deg); }
+    }
+
+    /* 頂部狀態列 */
+    .top-bar {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 1120px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .app-badge {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(6px);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      border: 2px solid #FFD372;
+      background: #FFFFFF;
+      color: var(--text-dark);
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 6px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 3px 0 #F2C14E;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.2s;
+    }
+
+    .pill-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #F2C14E;
+    }
+
+    .pill-btn.active-sound {
+      background: #E8F9FD;
+      border-color: #4D96FF;
+      box-shadow: 0 3px 0 #4D96FF;
+      color: #1D5B99;
+    }
+
+    /* 主容器：手機直式為單欄上下排列，平板橫式為雙欄左右排列 */
+    .main-stage {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      align-items: stretch;
+      transition: all 0.3s ease;
+    }
+
+    /* =========================================
+       可愛吐司小熊造型電子鐘 (上半部 / 左半部)
+       ========================================= */
+    .cute-clock-wrapper {
+      position: relative;
+      padding-top: 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 鬧鐘耳朵與小鈴鐺 */
+    .clock-ears {
+      position: absolute;
+      top: 0;
+      width: 82%;
+      max-width: 380px;
+      display: flex;
+      justify-content: space-between;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .ear {
+      width: 68px;
+      height: 68px;
+      background: var(--clock-shell);
+      border: 5px solid #FFFFFF;
+      border-radius: 50%;
+      box-shadow: inset 0 -6px 0 var(--clock-shell-dark), 0 6px 14px rgba(214,135,0,0.25);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ear::after {
+      content: '';
+      width: 34px;
+      height: 34px;
+      background: #FF8E8E;
+      border-radius: 50%;
+    }
+
+    /* 頂部貪睡裝飾小按鈕（荷包蛋造型） */
+    .clock-top-hat {
+      position: absolute;
+      top: 4px;
+      background: #FFFFFF;
+      padding: 4px 18px;
+      border-radius: 30px 30px 10px 10px;
+      border: 3px solid var(--clock-shell);
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #E87A00;
+      z-index: 3;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 鬧鐘本體外殼 */
+    .clock-body {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      background: var(--clock-shell);
+      border-radius: 42px;
+      padding: 18px 18px 22px;
+      border: 6px solid #FFFFFF;
+      box-shadow:
+        0 10px 0 var(--clock-shell-dark),
+        var(--shadow-soft);
+      transition: transform 0.3s ease;
+    }
+
+    .clock-body.ringing {
+      animation: clockShake 0.45s ease-in-out infinite;
+    }
+
+    @keyframes clockShake {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      20% { transform: rotate(-2.5deg) scale(1.02); }
+      40% { transform: rotate(2.5deg) scale(1.02); }
+      60% { transform: rotate(-2deg) scale(1.02); }
+      80% { transform: rotate(2deg) scale(1.02); }
+    }
+
+    .clock-inner-face {
+      background: var(--clock-face);
+      border-radius: 30px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    /* 可愛表情與日期列 */
+    .clock-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .date-badge {
+      background: #FFF0C2;
+      color: #6B4C2B;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    .mascot-face {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFE8E8;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #D64545;
+    }
+
+    /* 數位電子鐘螢幕 */
+    .lcd-screen {
+      background: var(--clock-screen);
+      border-radius: 24px;
+      padding: 18px 14px;
+      position: relative;
+      overflow: hidden;
+      border: 4px solid #4A3A34;
+      box-shadow: inset 0 6px 16px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 螢幕反光裝飾 */
+    .lcd-screen::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: -20%;
+      width: 65%;
+      height: 180%;
+      background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01));
+      transform: rotate(25deg);
+      pointer-events: none;
+    }
+
+    .ampm-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+
+    .ampm-tag {
+      background: rgba(255, 225, 93, 0.2);
+      color: var(--digit-main);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .target-mini-tag {
+      color: #A7D7C5;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .time-digits-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 4px;
+      line-height: 1;
+      margin: 4px 0;
+    }
+
+    .time-hm {
+      font-family: 'Fredoka', monospace;
+      font-size: clamp(3.6rem, 15vw, 5.6rem);
+      font-weight: 700;
+      color: var(--digit-main);
+      text-shadow: 0 0 18px rgba(255, 225, 93, 0.45);
+      letter-spacing: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .colon-blink {
+      animation: blinkColon 1s steps(1) infinite;
+      display: inline-block;
+      margin: 0 1px;
+    }
+
+    @keyframes blinkColon {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    .time-sec {
+      font-family: 'Fredoka', monospace;
+      font-size: clamp(1.7rem, 6vw, 2.5rem);
+      font-weight: 700;
+      color: var(--digit-sec);
+      text-shadow: 0 0 12px rgba(255, 159, 69, 0.4);
+      min-width: 2.2ch;
+      text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 鬧鐘小腳丫 */
+    .clock-feet {
+      width: 72%;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+
+    .foot {
+      width: 44px;
+      height: 18px;
+      background: var(--clock-shell-dark);
+      border-radius: 0 0 18px 18px;
+    }
+
+    /* =========================================
+       下方 / 右側：7:20 早餐倒數計時器面板
+       ========================================= */
+    .countdown-card {
+      background: var(--countdown-bg);
+      border: 5px solid #FFFFFF;
+      border-radius: 34px;
+      padding: 18px 20px;
+      box-shadow:
+        0 8px 0 var(--countdown-border),
+        var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+
+    .countdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .countdown-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--text-dark);
+    }
+
+    .target-time-pill {
+      background: #FF6B6B;
+      color: #FFFFFF;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 3px 8px rgba(255, 107, 107, 0.3);
+    }
+
+    /* 倒數三格數字盒 */
+    .countdown-boxes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cd-box {
+      background: #FFFFFF;
+      border: 3px solid #FFE194;
+      border-radius: 22px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 0 #FFE194;
+      transition: all 0.25s;
+    }
+
+    .cd-box.urgent {
+      border-color: #FF8787;
+      box-shadow: 0 4px 0 #FF8787;
+      background: #FFF5F5;
+      animation: pulseUrgent 1s ease-in-out infinite;
+    }
+
+    @keyframes pulseUrgent {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    .cd-number {
+      font-family: 'Fredoka', monospace;
+      font-size: clamp(2.1rem, 8vw, 3.1rem);
+      font-weight: 700;
+      color: #E86A17;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cd-box.urgent .cd-number {
+      color: #E03131;
+    }
+
+    .cd-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* 早餐能量進度條 */
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 24px;
+      background: #F3E5AB;
+      border-radius: 999px;
+      padding: 3px;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #E6C875;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 65%;
+      background: linear-gradient(90deg, #6BCB77 0%, #FFD93D 60%, #FF6B6B 100%);
+      border-radius: 999px;
+      transition: width 0.5s ease;
+      position: relative;
+    }
+
+    .cheer-message {
+      background: #FFF3CD;
+      border-left: 5px solid #FFB72B;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #5C4028;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.4;
+    }
+
+    /* 互動控制區：完成早餐按鈕 & 媽咪設定列 */
+    .action-buttons-row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 10px;
+    }
+
+    .big-btn {
+      border: none;
+      border-radius: 20px;
+      padding: 13px 16px;
+      font-family: inherit;
+      font-size: 1.02rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+
+    .big-btn:active {
+      transform: translateY(3px);
+    }
+
+    .btn-finish-now {
+      background: linear-gradient(135deg, #3EC70B, #2B9E00);
+      color: #FFFFFF;
+      box-shadow: 0 5px 0 #1F7300;
+    }
+
+    .btn-test-alarm {
+      background: linear-gradient(135deg, #4D96FF, #2F73D9);
+      color: #FFFFFF;
+      box-shadow: 0 5px 0 #1D52A1;
+      font-size: 0.94rem;
+    }
+
+    /* 媽咪小幫手設定折疊區 */
+    .mom-settings {
+      border-top: 2px dashed #F0D9A8;
+      padding-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .setting-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .cute-input, .cute-select {
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 5px 10px;
+      border-radius: 12px;
+      border: 2px solid #FFD372;
+      background: #FFFFFF;
+      color: var(--text-dark);
+      outline: none;
+    }
+
+    .file-upload-label {
+      cursor: pointer;
+      background: #FFF0D9;
+      border: 2px solid #FFC971;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      color: #7A4E1D;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .file-upload-label input {
+      display: none;
+    }
+
+    /* =========================================
+       7:20 時間到！全螢幕煙火慶祝彈窗與畫布
+       ========================================= */
+    #fireworksCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .celebration-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(25, 18, 40, 0.72);
+      backdrop-filter: blur(5px);
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .celebration-modal.show {
+      display: flex;
+      animation: fadeInModal 0.35s ease;
+    }
+
+    @keyframes fadeInModal {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .celebration-card {
+      background: linear-gradient(180deg, #FFFDF7 0%, #FFF2CC 100%);
+      border: 6px solid #FFD93D;
+      border-radius: 38px;
+      padding: 28px 24px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .trophy-bounce {
+      font-size: 4.5rem;
+      line-height: 1;
+      animation: bounceTrophy 0.9s ease-in-out infinite alternate;
+    }
+
+    @keyframes bounceTrophy {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(-14px) scale(1.1); }
+    }
+
+    .celebration-title {
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      font-weight: 900;
+      color: #D64545;
+    }
+
+    .celebration-sub {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #5C4028;
+      line-height: 1.5;
+    }
+
+    .music-wave {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFE8A3;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      color: #8C5300;
+      font-size: 0.92rem;
+    }
+
+    .btn-stop-celebration {
+      margin-top: 6px;
+      width: 100%;
+      background: linear-gradient(135deg, #FF5D5D, #E03131);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 22px;
+      padding: 15px 24px;
+      font-family: inherit;
+      font-size: 1.2rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #A61E1E;
+    }
+
+    .btn-stop-celebration:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 #A61E1E;
+    }
+
+    /* =========================================
+       平板橫式 (Landscape) 與寬螢幕雙欄響應式配置
+       ========================================= */
+    @media (orientation: landscape) and (min-width: 700px), (min-width: 900px) {
+      body {
+        padding: 18px 28px;
+      }
+
+      .main-stage {
+        max-width: 1120px;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 28px;
+      }
+
+      .cute-clock-wrapper {
+        flex: 1.08;
+        justify-content: center;
+      }
+
+      .clock-body {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .clock-inner-face {
+        height: 100%;
+        justify-content: space-between;
+        padding: 22px;
+      }
+
+      .lcd-screen {
+        flex: 1;
+        padding: 28px 18px;
+      }
+
+      .time-hm {
+        font-size: clamp(4.2rem, 7.2vw, 6.2rem);
+      }
+
+      .time-sec {
+        font-size: clamp(2rem, 3.2vw, 2.8rem);
+      }
+
+      .countdown-card {
+        flex: 1;
+        justify-content: space-between;
+        padding: 22px 26px;
+      }
+    }
+
+    /* 針對較矮的手機橫向微調 */
+    @media (orientation: landscape) and (max-height: 500px) {
+      .top-bar { margin-bottom: 6px; }
+      .main-stage {
+        max-width: 960px;
+        flex-direction: row;
+        gap: 14px;
+      }
+      .cute-clock-wrapper { flex: 1; padding-top: 16px; }
+      .countdown-card { flex: 1; padding: 12px 14px; gap: 8px; }
+      .lcd-screen { padding: 10px; }
+      .time-hm { font-size: 3.2rem; }
+      .cd-number { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 背景漂浮可愛早餐元素 -->
+  <div class="bg-decorations" aria-hidden="true">
+    <div class="floating-item">🍞</div>
+    <div class="floating-item">🍳</div>
+    <div class="floating-item">🥛</div>
+    <div class="floating-item">🍎</div>
+    <div class="floating-item">🥐</div>
+    <div class="floating-item">🍓</div>
+  </div>
+
+  <!-- 煙火特效 Canvas -->
+  <canvas id="fireworksCanvas"></canvas>
+
+  <!-- 頂部工具列 -->
+  <header class="top-bar">
+    <div class="app-badge">
+      <span>🌞</span>
+      <span>寶貝活力早餐小鬧鐘</span>
+    </div>
+    <div class="top-actions">
+      <button type="button" class="pill-btn active-sound" id="btnToggleAudio" title="點擊測試並確保兒歌音效已啟用">
+        <span id="audioIcon">🔊</span>
+        <span id="audioStatusText">兒歌音效已就緒（點我試聽）</span>
+      </button>
+      <button type="button" class="pill-btn" id="btnWakeLock" title="保持螢幕常亮不休眠">
+        <span>💡</span>
+        <span id="wakeLockText">螢幕常亮</span>
+      </button>
+      <button type="button" class="pill-btn" id="btnFullscreen" title="切換全螢幕顯示">
+        <span>⛶</span>
+        <span>全螢幕</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主舞台：直式上下排列 / 橫式左右並排 -->
+  <main class="main-stage">
+
+    <!-- 左側/上方：可愛小熊吐司數字電子鐘 -->
+    <section class="cute-clock-wrapper" aria-label="目前時間電子鐘">
+      <div class="clock-ears">
+        <div class="ear"></div>
+        <div class="ear"></div>
+      </div>
+      <div class="clock-top-hat">
+        <span>🍳</span>
+        <span id="clockModeBadge">早安元氣模式</span>
+      </div>
+
+      <div class="clock-body" id="clockBody">
+        <div class="clock-inner-face">
+          <div class="clock-header-row">
+            <div class="date-badge" id="dateDisplay">11月9日 星期一</div>
+            <div class="mascot-face" id="mascotMood">
+              <span id="mascotEmoji">🐻</span>
+              <span id="mascotStatus">美味早餐時間</span>
+            </div>
+          </div>
+
+          <!-- 數位電子鐘大螢幕 -->
+          <div class="lcd-screen">
+            <div class="ampm-indicator">
+              <span class="ampm-tag" id="ampmDisplay">上午 AM</span>
+              <span class="target-mini-tag" id="targetMiniHint">🔔 目標 07:20 完食</span>
+            </div>
+            <div class="time-digits-row">
+              <span class="time-hm">
+                <span id="hourDigits">07</span><span class="colon-blink">:</span><span id="minDigits">00</span>
+              </span>
+              <span class="time-sec" id="secDigits">00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="clock-feet">
+        <div class="foot"></div>
+        <div class="foot"></div>
+      </div>
+    </section>
+
+    <!-- 右側/下方：07:20 倒數計時器與互動面板 -->
+    <section class="countdown-card" aria-label="早餐倒數計時器">
+      <div class="countdown-header">
+        <div class="countdown-title">
+          <span>⏳</span>
+          <span id="countdownTitleText">距離早餐完成時間還有</span>
+        </div>
+        <div class="target-time-pill">
+          <span>🎯</span>
+          <span id="targetPillText">上午 07:20</span>
+        </div>
+      </div>
+
+      <!-- 時、分、秒倒數方塊 -->
+      <div class="countdown-boxes">
+        <div class="cd-box" id="cdBoxH">
+          <div class="cd-number" id="cdHours">00</div>
+          <div class="cd-label">小時</div>
+        </div>
+        <div class="cd-box" id="cdBoxM">
+          <div class="cd-number" id="cdMinutes">15</div>
+          <div class="cd-label">分鐘</div>
+        </div>
+        <div class="cd-box" id="cdBoxS">
+          <div class="cd-number" id="cdSeconds">00</div>
+          <div class="cd-label">秒鐘</div>
+        </div>
+      </div>
+
+      <!-- 進度條與溫馨叮嚀 -->
+      <div class="progress-section">
+        <div class="progress-track" title="早餐時間進度條">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="cheer-message" id="cheerMessage">
+          <span style="font-size: 1.35rem;">🥪</span>
+          <span id="cheerText">一口一口慢慢嚼，早上 7:20 準時吃完會有驚喜煙火喔！</span>
+        </div>
+      </div>
+
+      <!-- 寶貝與媽咪互動按鈕 -->
+      <div class="action-buttons-row">
+        <button type="button" class="big-btn btn-finish-now" id="btnEarlyFinish">
+          <span>🎉</span>
+          <span>我吃完早餐囉！</span>
+        </button>
+        <button type="button" class="big-btn btn-test-alarm" id="btnDemo10Sec">
+          <span>⚡</span>
+          <span id="demoBtnText">模擬倒數 5 秒</span>
+        </button>
+      </div>
+
+      <!-- 媽咪設定列：調整目標時間、選擇兒歌或自訂音樂 -->
+      <div class="mom-settings">
+        <div class="setting-group">
+          <label for="targetTimeInput">⏰ 目標時間：</label>
+          <input type="time" id="targetTimeInput" class="cute-input" value="07:20">
+        </div>
+        <div class="setting-group">
+          <label for="songSelect">🎵 兒歌：</label>
+          <select id="songSelect" class="cute-select">
+            <option value="twinkle">小星星 (一閃一閃亮晶晶)</option>
+            <option value="happy">如果感到幸福你就拍拍手</option>
+            <option value="tigers">兩隻老虎跑得快</option>
+            <option value="bridge">倫敦鐵橋垮下來</option>
+            <option value="custom" id="customSongOption" disabled>自訂上傳音樂檔</option>
+          </select>
+          <label class="file-upload-label" title="可從手機或平板選擇孩子喜歡的 MP3 兒歌">
+            <span>📂 自選MP3</span>
+            <input type="file" id="customAudioInput" accept="audio/*">
+          </label>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 07:20 時間到 / 完成早餐 煙火與兒歌慶祝彈窗 -->
+  <div class="celebration-modal" id="celebrationModal" role="dialog" aria-modal="true">
+    <div class="celebration-card">
+      <div class="trophy-bounce" id="celebrationIcon">🎆</div>
+      <h2 class="celebration-title" id="celebrationTitle">07:20 時間到囉！</h2>
+      <p class="celebration-sub" id="celebrationDesc">
+        太棒了！準時用完活力早餐 🍞🥛<br>
+        準備擦擦嘴巴、背起書包開心出門囉！
+      </p>
+      <div class="music-wave">
+        <span>🎶</span>
+        <span id="playingSongName">正在播放歡樂兒歌與煙火秀...</span>
+      </div>
+      <button type="button" class="btn-stop-celebration" id="btnCloseCelebration">
+        👏 停止音樂，準備出發！
+      </button>
+    </div>
+  </div>
+
+  <!-- 隱藏的自訂音訊播放器 -->
+  <audio id="customAudioPlayer" preload="auto" loop></audio>
+
+  <script>
+    /*************************************************************
+     * 1. 全域狀態與 DOM 元素
+     *************************************************************/
+    const hourDigits = document.getElementById('hourDigits');
+    const minDigits = document.getElementById('minDigits');
+    const secDigits = document.getElementById('secDigits');
+    const ampmDisplay = document.getElementById('ampmDisplay');
+    const dateDisplay = document.getElementById('dateDisplay');
+    const clockBody = document.getElementById('clockBody');
+    const mascotEmoji = document.getElementById('mascotEmoji');
+    const mascotStatus = document.getElementById('mascotStatus');
+    const targetMiniHint = document.getElementById('targetMiniHint');
+
+    const cdHours = document.getElementById('cdHours');
+    const cdMinutes = document.getElementById('cdMinutes');
+    const cdSeconds = document.getElementById('cdSeconds');
+    const cdBoxH = document.getElementById('cdBoxH');
+    const cdBoxM = document.getElementById('cdBoxM');
+    const cdBoxS = document.getElementById('cdBoxS');
+    const progressFill = document.getElementById('progressFill');
+    const cheerText = document.getElementById('cheerText');
+    const targetPillText = document.getElementById('targetPillText');
+    const countdownTitleText = document.getElementById('countdownTitleText');
+
+    const targetTimeInput = document.getElementById('targetTimeInput');
+    const songSelect = document.getElementById('songSelect');
+    const customAudioInput = document.getElementById('customAudioInput');
+    const customAudioPlayer = document.getElementById('customAudioPlayer');
+    const customSongOption = document.getElementById('customSongOption');
+
+    const btnToggleAudio = document.getElementById('btnToggleAudio');
+    const audioStatusText = document.getElementById('audioStatusText');
+    const btnEarlyFinish = document.getElementById('btnEarlyFinish');
+    const btnDemo10Sec = document.getElementById('btnDemo10Sec');
+    const demoBtnText = document.getElementById('demoBtnText');
+
+    const celebrationModal = document.getElementById('celebrationModal');
+    const celebrationTitle = document.getElementById('celebrationTitle');
+    const celebrationDesc = document.getElementById('celebrationDesc');
+    const celebrationIcon = document.getElementById('celebrationIcon');
+    const btnCloseCelebration = document.getElementById('btnCloseCelebration');
+
+    // 預設目標時間 07:20
+    let targetHour = 7;
+    let targetMinute = 20;
+    let lastTriggeredDateKey = ''; // 避免同一分鐘重複觸發
+    let isDemoMode = false;
+    let demoTargetTimestamp = 0;
+    let isCelebrating = false;
+
+    /*************************************************************
+     * 2. Web Audio API 歡樂兒歌合成器（免外部連線、零破音、水晶木琴音色）
+     *************************************************************/
+    let audioCtx = null;
+    let melodyTimer = null;
+    let isPlayingMelody = false;
+    let currentNoteIndex = 0;
+
+    // 音高頻率對照表
+    const NOTE_FREQ = {
+      'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+      'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00,
+      'REST': 0
+    };
+
+    // 四首經典活潑兒歌簡譜 [音符, 拍長(毫秒)]
+    const SONGS = {
+      twinkle: {
+        name: '《小星星》一閃一閃亮晶晶',
+        notes: [
+          ['C5', 320], ['C5', 320], ['G5', 320], ['G5', 320], ['A5', 320], ['A5', 320], ['G5', 600],
+          ['F5', 320], ['F5', 320], ['E5', 320], ['E5', 320], ['D5', 320], ['D5', 320], ['C5', 600],
+          ['G5', 320], ['G5', 320], ['F5', 320], ['F5', 320], ['E5', 320], ['E5', 320], ['D5', 600],
+          ['G5', 320], ['G5', 320], ['F5', 320], ['F5', 320], ['E5', 320], ['E5', 320], ['D5', 600],
+          ['C5', 320], ['C5', 320], ['G5', 320], ['G5', 320], ['A5', 320], ['A5', 320], ['G5', 600],
+          ['F5', 320], ['F5', 320], ['E5', 320], ['E5', 320], ['D5', 320], ['D5', 320], ['C5', 700]
+        ]
+      },
+      happy: {
+        name: '《幸福拍手歌》如果感到幸福你就拍拍手',
+        notes: [
+          ['G4', 200], ['G4', 200], ['C5', 280], ['C5', 280], ['C5', 280], ['C5', 280], ['C5', 280], ['D5', 240], ['E5', 350],
+          ['G5', 260], ['E5', 260], ['REST', 120],
+          ['G4', 200], ['G4', 200], ['D5', 280], ['D5', 280], ['D5', 280], ['D5', 280], ['D5', 280], ['E5', 240], ['F5', 350],
+          ['E5', 260], ['D5', 260], ['REST', 120],
+          ['G4', 200], ['G4', 200], ['E5', 280], ['E5', 280], ['E5', 280], ['E5', 280], ['E5', 280], ['F5', 240], ['G5', 420],
+          ['A5', 320], ['A5', 320], ['G5', 320], ['F5', 320], ['E5', 320], ['D5', 320], ['C5', 600]
+        ]
+      },
+      tigers: {
+        name: '《兩隻老虎》兩隻老虎跑得快',
+        notes: [
+          ['C5', 300], ['D5', 300], ['E5', 300], ['C5', 300],
+          ['C5', 300], ['D5', 300], ['E5', 300], ['C5', 300],
+          ['E5', 300], ['F5', 300], ['G5', 560],
+          ['E5', 300], ['F5', 300], ['G5', 560],
+          ['G5', 180], ['A5', 180], ['G5', 180], ['F5', 180], ['E5', 300], ['C5', 300],
+          ['G5', 180], ['A5', 180], ['G5', 180], ['F5', 180], ['E5', 300], ['C5', 300],
+          ['D5', 300], ['G4', 300], ['C5', 560],
+          ['D5', 300], ['G4', 300], ['C5', 620]
+        ]
+      },
+      bridge: {
+        name: '《倫敦鐵橋垮下來》',
+        notes: [
+          ['G5', 420], ['A5', 180], ['G5', 280], ['F5', 280], ['E5', 280], ['F5', 280], ['G5', 520],
+          ['D5', 280], ['E5', 280], ['F5', 520], ['E5', 280], ['F5', 280], ['G5', 520],
+          ['G5', 420], ['A5', 180], ['G5', 280], ['F5', 280], ['E5', 280], ['F5', 280], ['G5', 520],
+          ['D5', 520], ['G5', 520], ['E5', 280], ['C5', 650]
+        ]
+      }
+    };
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // 播放單顆可愛木琴/音樂盒音符
+    function playBellTone(freq, durationMs) {
+      if (!audioCtx || freq <= 0) return;
+      const now = audioCtx.currentTime;
+      const dur = durationMs / 1000;
+
+      // 主音（正弦波 + 三角波營造溫暖兒童木琴音色）
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(freq, now);
+
+      // 高八度清脆泛音
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq * 2, now);
+
+      const subGain = audioCtx.createGain();
+      subGain.gain.setValueAtTime(0.18, now);
+
+      gainNode.gain.setValueAtTime(0.001, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.38, now + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + dur * 0.95);
+
+      osc1.connect(gainNode);
+      osc2.connect(subGain);
+      subGain.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + dur);
+      osc2.stop(now + dur);
+    }
+
+    // 播放煙火爆炸歡呼音效
+    function playFireworkPopSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      const startFreq = 450 + Math.random() * 500;
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(120, now + 0.18);
+
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.19);
+    }
+
+    function startChildrenSong() {
+      stopChildrenSong();
+      ensureAudioContext();
+
+      const selectedKey = songSelect.value;
+      const playingSongNameEl = document.getElementById('playingSongName');
+
+      if (selectedKey === 'custom' && customAudioPlayer.src) {
+        playingSongNameEl.textContent = '正在播放自選兒歌與煙火秀 🎵';
+        customAudioPlayer.currentTime = 0;
+        customAudioPlayer.play().catch(() => {});
+        isPlayingMelody = true;
+        return;
+      }
+
+      const song = SONGS[selectedKey] || SONGS.twinkle;
+      playingSongNameEl.textContent = `正在播放：${song.name} 🎵`;
+      isPlayingMelody = true;
+      currentNoteIndex = 0;
+
+      function scheduleNextNote() {
+        if (!isPlayingMelody) return;
+        const [noteName, duration] = song.notes[currentNoteIndex];
+        const freq = NOTE_FREQ[noteName] || 0;
+        if (freq > 0) {
+          playBellTone(freq, duration);
+        }
+        currentNoteIndex = (currentNoteIndex + 1) % song.notes.length;
+        melodyTimer = setTimeout(scheduleNextNote, duration + 35);
+      }
+
+      scheduleNextNote();
+    }
+
+    function stopChildrenSong() {
+      isPlayingMelody = false;
+      if (melodyTimer) {
+        clearTimeout(melodyTimer);
+        melodyTimer = null;
+      }
+      if (!customAudioPlayer.paused) {
+        customAudioPlayer.pause();
+        customAudioPlayer.currentTime = 0;
+      }
+    }
+
+    // 試聽一小段叮咚聲確認喇叭開啟
+    btnToggleAudio.addEventListener('click', () => {
+      ensureAudioContext();
+      playBellTone(523.25, 160);
+      setTimeout(() => playBellTone(659.25, 160), 170);
+      setTimeout(() => playBellTone(783.99, 280), 340);
+      audioStatusText.textContent = '兒歌音效已啟用（點我試聽）';
+    });
+
+    // 自選 MP3 上傳處理
+    customAudioInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      customAudioPlayer.src = url;
+      customSongOption.disabled = false;
+      customSongOption.textContent = `🎵 ${file.name.slice(0, 14)}`;
+      songSelect.value = 'custom';
+    });
+
+    /*************************************************************
+     * 3. 繽紛煙火動畫引擎 (HTML5 Canvas)
+     *************************************************************/
+    const canvas = document.getElementById('fireworksCanvas');
+    const ctx = canvas.getContext('2d');
+    let fireworksActive = false;
+    let particles = [];
+    let rockets = [];
+    let fwAnimId = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    const FW_COLORS = [
+      '#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93',
+      '#FF924C', '#FF6392', '#00F5D4', '#FEE440'
+    ];
+
+    function launchRocket() {
+      const x = canvas.width * (0.15 + Math.random() * 0.7);
+      const targetY = canvas.height * (0.15 + Math.random() * 0.4);
+      const color = FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)];
+      rockets.push({
+        x,
+        y: canvas.height,
+        targetY,
+        vy: -(8 + Math.random() * 4),
+        color
+      });
+    }
+
+    function createExplosion(x, y, baseColor) {
+      playFireworkPopSound();
+      const count = 48;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.2;
+        const speed = 2 + Math.random() * 5.5;
+        const color = Math.random() > 0.3
+          ? baseColor
+          : FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)];
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1,
+          size: 3 + Math.random() * 3.5,
+          color,
+          gravity: 0.08
+        });
+      }
+    }
+
+    function updateFireworks() {
+      if (!fireworksActive && rockets.length === 0 && particles.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (fireworksActive && Math.random() < 0.09) {
+        launchRocket();
+      }
+
+      // 更新升空火箭
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i];
+        r.y += r.vy;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = r.color;
+        ctx.fill();
+
+        if (r.y <= r.targetY) {
+          createExplosion(r.x, r.y, r.color);
+          rockets.splice(i, 1);
+        }
+      }
+
+      // 更新爆炸火花粒子
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.98;
+        p.alpha -= 0.016;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = p.color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      fwAnimId = requestAnimationFrame(updateFireworks);
+    }
+
+    function startFireworksShow() {
+      fireworksActive = true;
+      // 立即發射 3 發煙火
+      for (let i = 0; i < 3; i++) {
+        setTimeout(launchRocket, i * 220);
+      }
+      if (fwAnimId) cancelAnimationFrame(fwAnimId);
+      updateFireworks();
+    }
+
+    function stopFireworksShow() {
+      fireworksActive = false;
+      rockets = [];
+      particles = [];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    /*************************************************************
+     * 4. 慶祝與鬧鐘觸發流程
+     *************************************************************/
+    function triggerCelebration(reason = 'alarm') {
+      if (isCelebrating) return;
+      isCelebrating = true;
+      isDemoMode = false;
+      demoBtnText.textContent = '模擬倒數 5 秒';
+
+      clockBody.classList.add('ringing');
+      celebrationModal.classList.add('show');
+
+      const padH = String(targetHour).padStart(2, '0');
+      const padM = String(targetMinute).padStart(2, '0');
+
+      if (reason === 'early') {
+        celebrationIcon.textContent = '🏆';
+        celebrationTitle.textContent = '哇！提早吃完早餐囉！';
+        celebrationDesc.innerHTML = `比 ${padH}:${padM} 還要快完成，你是超級早餐小達人！🍞🥛<br>送你滿滿的煙火與兒歌獎勵！`;
+      } else {
+        celebrationIcon.textContent = '🎆';
+        celebrationTitle.textContent = `${padH}:${padM} 時間到囉！`;
+        celebrationDesc.innerHTML = `準時用完活力早餐 🍞🥛<br>擦擦小嘴巴，準備背書包開心出門囉！`;
+      }
+
+      startChildrenSong();
+      startFireworksShow();
+    }
+
+    function stopCelebration() {
+      isCelebrating = false;
+      clockBody.classList.remove('ringing');
+      celebrationModal.classList.remove('show');
+      stopChildrenSong();
+      stopFireworksShow();
+    }
+
+    btnCloseCelebration.addEventListener('click', stopCelebration);
+    btnEarlyFinish.addEventListener('click', () => triggerCelebration('early'));
+
+    // 模擬倒數 5 秒按鈕（讓媽咪與寶貝隨時測試 7:20 到點效果）
+    btnDemo10Sec.addEventListener('click', () => {
+      ensureAudioContext();
+      if (isDemoMode) {
+        isDemoMode = false;
+        demoBtnText.textContent = '模擬倒數 5 秒';
+        return;
+      }
+      isDemoMode = true;
+      demoTargetTimestamp = Date.now() + 5000;
+      demoBtnText.textContent = '取消模擬倒數';
+    });
+
+    // 媽咪修改目標時間
+    targetTimeInput.addEventListener('change', () => {
+      const val = targetTimeInput.value;
+      if (!val) return;
+      const [h, m] = val.split(':').map(Number);
+      targetHour = h;
+      targetMinute = m;
+      lastTriggeredDateKey = '';
+      updateTargetLabels();
+    });
+
+    function updateTargetLabels() {
+      const period = targetHour < 12 ? '上午' : '下午';
+      const padH = String(targetHour).padStart(2, '0');
+      const padM = String(targetMinute).padStart(2, '0');
+      targetPillText.textContent = `${period} ${padH}:${padM}`;
+      targetMiniHint.textContent = `🔔 目標 ${padH}:${padM} 完食`;
+    }
+
+    /*************************************************************
+     * 5. 主時鐘與倒數計時器每秒更新迴圈
+     *************************************************************/
+    const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+
+    function tickClock() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+
+      // 1. 更新上方可愛電子鐘
+      hourDigits.textContent = String(hours).padStart(2, '0');
+      minDigits.textContent = String(minutes).padStart(2, '0');
+      secDigits.textContent = String(seconds).padStart(2, '0');
+      ampmDisplay.textContent = hours < 12 ? '上午 AM' : '下午 PM';
+
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const dayName = WEEKDAYS[now.getDay()];
+      dateDisplay.textContent = `${month}月${date}日 ${dayName}`;
+
+      // 檢查是否剛好到達早上 07:20:00 (或設定的目標時間)
+      const todayKey = `${now.getFullYear()}-${month}-${date}-${targetHour}-${targetMinute}`;
+      if (
+        !isDemoMode &&
+        hours === targetHour &&
+        minutes === targetMinute &&
+        seconds === 0 &&
+        lastTriggeredDateKey !== todayKey
+      ) {
+        lastTriggeredDateKey = todayKey;
+        triggerCelebration('alarm');
+      }
+
+      // 2. 計算倒數計時
+      let diffMs = 0;
+      if (isDemoMode) {
+        diffMs = demoTargetTimestamp - Date.now();
+        if (diffMs <= 0) {
+          cdHours.textContent = '00';
+          cdMinutes.textContent = '00';
+          cdSeconds.textContent = '00';
+          triggerCelebration('alarm');
+          return;
+        }
+      } else {
+        const targetDate = new Date(now);
+        targetDate.setHours(targetHour, targetMinute, 0, 0);
+
+        // 若今天已經過了 07:20，計算距離明天早上 07:20 的時間
+        if (now >= targetDate) {
+          targetDate.setDate(targetDate.getDate() + 1);
+          countdownTitleText.textContent = '距離明天早餐完成時間還有';
+        } else {
+          countdownTitleText.textContent = '距離早餐完成時間還有';
+        }
+        diffMs = targetDate - now;
+      }
+
+      const totalSec = Math.max(0, Math.ceil(diffMs / 1000));
+      const remH = Math.floor(totalSec / 3600);
+      const remM = Math.floor((totalSec % 3600) / 60);
+      const remS = totalSec % 60;
+
+      cdHours.textContent = String(remH).padStart(2, '0');
+      cdMinutes.textContent = String(remM).padStart(2, '0');
+      cdSeconds.textContent = String(remS).padStart(2, '0');
+
+      // 3. 根據剩餘時間更新進度條、吉祥物表情與鼓勵話語（以早餐時段 40 分鐘為基準）
+      const breakfastWindowSec = 40 * 60; // 假設 06:40 ~ 07:20 為 40 分鐘用餐區間
+      let progressPct = 100;
+      if (totalSec <= breakfastWindowSec) {
+        progressPct = Math.max(5, Math.min(100, ((breakfastWindowSec - totalSec) / breakfastWindowSec) * 100));
+      } else {
+        progressPct = 15;
+      }
+      progressFill.style.width = `${progressPct}%`;
+
+      // 緊急閃爍提示（最後 5 分鐘內）
+      const isUrgent = totalSec > 0 && totalSec <= 300;
+      cdBoxH.classList.toggle('urgent', isUrgent);
+      cdBoxM.classList.toggle('urgent', isUrgent);
+      cdBoxS.classList.toggle('urgent', isUrgent);
+
+      // 分階段溫馨鼓勵訊息
+      if (isDemoMode) {
+        mascotEmoji.textContent = '🤩';
+        mascotStatus.textContent = '準備放煙火囉';
+        cheerText.textContent = `倒數 ${totalSec} 秒！準備好聽兒歌看煙火了嗎？🎆`;
+      } else if (totalSec <= 60) {
+        mascotEmoji.textContent = '🚀';
+        mascotStatus.textContent = '最後 1 分鐘衝刺';
+        cheerText.textContent = '最後一分鐘囉！喝完最後一口牛奶，煙火馬上要發射啦！🥛✨';
+      } else if (totalSec <= 300) {
+        mascotEmoji.textContent = '🐹';
+        mascotStatus.textContent = '加油剩 5 分鐘';
+        cheerText.textContent = '還剩不到 5 分鐘！專心把碗裡的早餐吃光光，準備領取煙火獎勵！💪';
+      } else if (totalSec <= 900) {
+        mascotEmoji.textContent = '🐰';
+        mascotStatus.textContent = '美味享用中';
+        cheerText.textContent = '時間剛剛好！一口一口慢慢嚼，營養滿分長得高喔！🍞🍳';
+      } else if (totalSec <= 2700) {
+        mascotEmoji.textContent = '🐻';
+        mascotStatus.textContent = '元氣早餐時間';
+        cheerText.textContent = '早安寶貝！愉快享用早餐，7:20 準時吃完會有歡樂兒歌與煙火秀喔！🌞';
+      } else {
+        mascotEmoji.textContent = '🐼';
+        mascotStatus.textContent = '期待明天早餐';
+        cheerText.textContent = '今天的早餐任務已經結束囉！明天早上 7:20 我們再一起挑戰吧！🌈';
+      }
+    }
+
+    setInterval(tickClock, 250);
+    tickClock();
+
+    /*************************************************************
+     * 6. 貼心功能：螢幕常亮 (Wake Lock) 與全螢幕切換
+     *************************************************************/
+    let wakeLockSentinel = null;
+    const btnWakeLock = document.getElementById('btnWakeLock');
+    const wakeLockText = document.getElementById('wakeLockText');
+
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator)) {
+        wakeLockText.textContent = '已保持顯示';
+        return;
+      }
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        btnWakeLock.classList.add('active-sound');
+        wakeLockText.textContent = '螢幕常亮中';
+        wakeLockSentinel.addEventListener('release', () => {
+          btnWakeLock.classList.remove('active-sound');
+          wakeLockText.textContent = '螢幕常亮';
+        });
+      } catch (err) {
+        wakeLockText.textContent = '點我保持常亮';
+      }
+    }
+
+    btnWakeLock.addEventListener('click', () => {
+      if (wakeLockSentinel) {
+        wakeLockSentinel.release();
+        wakeLockSentinel = null;
+      } else {
+        requestWakeLock();
+      }
+    });
+
+    // 嘗試自動啟用螢幕常亮
+    requestWakeLock();
+
+    // 全螢幕切換
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    btnFullscreen.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+  </script>
+</body>
+</html>
